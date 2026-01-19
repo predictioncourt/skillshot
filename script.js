@@ -345,7 +345,15 @@ function spawnEnemy() {
   });
 }
 
-setInterval(spawnEnemy, 1300);
+let spawnInterval = null;
+
+function startSpawning() {
+  // Var olan interval varsa temizle (restart sırasında)
+  if (spawnInterval !== null) {
+    clearInterval(spawnInterval);
+  }
+  spawnInterval = setInterval(spawnEnemy, 1300);
+}
 
 // ================== GAME LOOP ==================
 let gameOver = false;
@@ -355,9 +363,18 @@ function resetGame() {
   lockedCount = 0;
   enemies = [];
   shots = [];
-  gameStartTime = performance.now();
+  gameStartTime = 0;
   elapsedTime = 0;
-  update();
+  
+  // Spawn interval'ı temizle
+  if (spawnInterval !== null) {
+    clearInterval(spawnInterval);
+    spawnInterval = null;
+  }
+  
+  document.getElementById("tutorial").classList.remove("hidden");
+  document.getElementById("gameOverButtons").classList.add("hidden");
+  document.getElementById("timer").textContent = "00:00";
 }
 
 function update() {
@@ -557,6 +574,12 @@ function resetGame() {
   gameStartTime = 0;
   elapsedTime = 0;
   
+  // Spawn interval'ı temizle
+  if (spawnInterval !== null) {
+    clearInterval(spawnInterval);
+    spawnInterval = null;
+  }
+  
   // ========== ANTICHEAT RESET ==========
   AntiCheatSystem.reset();
   
@@ -578,6 +601,9 @@ function restartGame() {
   
   document.getElementById("gameOverButtons").classList.add("hidden");
   document.getElementById("timer").textContent = "00:00";
+  
+  // Oyunu başlat ve spawn'ı başlat
+  startSpawning();
   update();
 }
 
@@ -585,6 +611,7 @@ function restartGame() {
 document.getElementById("startBtn").addEventListener("click", () => {
   document.getElementById("tutorial").classList.add("hidden");
   gameStarted = true;
+  startSpawning(); // Spawn'ı başlat
   update();
 });
 
