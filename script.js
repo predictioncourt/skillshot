@@ -5,6 +5,7 @@ const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
 const CIRCLE_SPEED = 0.9; // Daire hareket hızı
 const DIRECTION_CHANGE_INTERVAL = 400; // Her kaç ms'de bir yön değiştirir
+const SHOT_COOLDOWN = 500; // Atışlar arası bekleme süresi (ms)
 
 // ================== CANVAS ==================
 const canvas = document.getElementById("game");
@@ -34,22 +35,15 @@ canvas.addEventListener("mousemove", e => {
 
 // ================== SHOTS ==================
 let shots = [];
-
-// Q Spam Fix
-let isQPressed = false;
+let lastShotTime = 0;
 
 document.addEventListener("keydown", e => {
   if (e.key.toLowerCase() === "q") {
-    if (!isQPressed) {
+    const now = performance.now();
+    if (now - lastShotTime > SHOT_COOLDOWN) {
       shoot();
-      isQPressed = true;
+      lastShotTime = now;
     }
-  }
-});
-
-document.addEventListener("keyup", e => {
-  if (e.key.toLowerCase() === "q") {
-    isQPressed = false;
   }
 });
 
