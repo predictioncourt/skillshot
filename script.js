@@ -1,9 +1,10 @@
 // ================== CONFIG ==================
 const INITIAL_DELAY = 1500; // 1.5 saniye başlangıç bekleme
-const CIRCLE_LIFETIME = 900; // 0.9 saniye daire görünme süresi
+const CIRCLE_LIFETIME = 1200; // 1.2 saniye daire görünme süresi
 const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
 const CIRCLE_SPEED = 1.5; // Daire hareket hızı
+const DIRECTION_CHANGE_INTERVAL = 400; // Her kaç ms'de bir yön değiştirir
 
 // ================== CANVAS ==================
 const canvas = document.getElementById("game");
@@ -103,6 +104,7 @@ function spawnNewCircle() {
     dy: dy,
     r: CIRCLE_RADIUS,
     spawnTime: performance.now(),
+    lastDirectionChange: performance.now(),
     color: "red"
   };
   
@@ -189,6 +191,15 @@ function update() {
           nextCircleTime = now + 300;
         }
       } else {
+        // Belli aralıklarla yön değiştirir (dodge)
+        const now = performance.now();
+        if (now - currentCircle.lastDirectionChange > DIRECTION_CHANGE_INTERVAL) {
+          const newAngle = Math.random() * Math.PI * 2;
+          currentCircle.dx = Math.cos(newAngle) * CIRCLE_SPEED;
+          currentCircle.dy = Math.sin(newAngle) * CIRCLE_SPEED;
+          currentCircle.lastDirectionChange = now;
+        }
+        
         // Daire konumunu güncelle (yavaş hareket)
         currentCircle.x += currentCircle.dx;
         currentCircle.y += currentCircle.dy;
