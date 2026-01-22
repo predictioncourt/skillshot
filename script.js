@@ -3,7 +3,7 @@ const INITIAL_DELAY = 1500; // 1.5 saniye başlangıç bekleme
 const CIRCLE_LIFETIME = 1400; // 1.4 saniye daire görünme süresi
 const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
-const CIRCLE_SPEED = 0.7; // Daire hareket hızı
+const CIRCLE_SPEED = 0.9; // Daire hareket hızı
 const DIRECTION_CHANGE_INTERVAL = 400; // Her kaç ms'de bir yön değiştirir
 
 // ================== CANVAS ==================
@@ -34,16 +34,22 @@ canvas.addEventListener("mousemove", e => {
 
 // ================== SHOTS ==================
 let shots = [];
-const Q_COOLDOWN = 200;
-let lastQTime = 0;
+
+// Q Spam Fix
+let isQPressed = false;
 
 document.addEventListener("keydown", e => {
   if (e.key.toLowerCase() === "q") {
-    const now = performance.now();
-    if (now - lastQTime >= Q_COOLDOWN) {
+    if (!isQPressed) {
       shoot();
-      lastQTime = now;
+      isQPressed = true;
     }
+  }
+});
+
+document.addEventListener("keyup", e => {
+  if (e.key.toLowerCase() === "q") {
+    isQPressed = false;
   }
 });
 
