@@ -3,7 +3,7 @@ const INITIAL_DELAY = 1500; // 1.5 saniye başlangıç bekleme
 const CIRCLE_LIFETIME = 1200; // 1.2 saniye daire görünme süresi
 const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
-const CIRCLE_SPEED = 1.5; // Daire hareket hızı
+const CIRCLE_SPEED = 0.9; // Daire hareket hızı
 const DIRECTION_CHANGE_INTERVAL = 400; // Her kaç ms'de bir yön değiştirir
 
 // ================== CANVAS ==================
