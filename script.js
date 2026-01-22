@@ -5,7 +5,7 @@ const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
 const CIRCLE_SPEED = 0.9; // Daire hareket hızı
 const DIRECTION_CHANGE_INTERVAL = 400; // Her kaç ms'de bir yön değiştirir
-const SHOT_COOLDOWN = 500; // Atışlar arası bekleme süresi (ms)
+const SHOT_COOLDOWN = 200; // Atışlar arası bekleme süresi (ms)
 
 // ================== CANVAS ==================
 const canvas = document.getElementById("game");
