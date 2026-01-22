@@ -256,8 +256,9 @@ function update() {
     ctx.font = "30px Arial";
     ctx.fillText(`Toplam Skor: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 40);
     
-    ctx.font = "20px Arial";
-    ctx.fillText("Sayfayı yenilemek için F5 tuşuna basın", canvas.width / 2, canvas.height / 2 + 100);
+    // Butonu göster
+    const restartBtn = document.getElementById("restartBtn");
+    restartBtn.style.display = "block";
     
     return;
   }
@@ -266,3 +267,8 @@ function update() {
 }
 
 update();
+
+// ================== RESTART BUTTON ==================
+document.getElementById("restartBtn").addEventListener("click", () => {
+  location.reload();
+});
