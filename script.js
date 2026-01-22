@@ -1,6 +1,6 @@
 // ================== CONFIG ==================
 const INITIAL_DELAY = 1500; // 1.5 saniye başlangıç bekleme
-const CIRCLE_LIFETIME = 8600; // 1.2 saniye daire görünme süresi
+const CIRCLE_LIFETIME = 1400; // 1.4 saniye daire görünme süresi
 const MAX_MISSED = 10; // Kaçırılabilecek maksimum daire
 const CIRCLE_RADIUS = 25;
 const CIRCLE_SPEED = 0.7; // Daire hareket hızı
@@ -283,7 +283,3 @@ update();
 document.getElementById("restartBtn").addEventListener("click", () => {
   location.reload();
 });
-
-
-
-
