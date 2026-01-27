@@ -6,9 +6,12 @@ const CIRCLE_SPEED = 0.9;
 const DIRECTION_CHANGE_INTERVAL = 400;
 const SHOT_COOLDOWN = 200;
 
-// ⬇️ KOMPLİKE YAŞAM SÜRESİ (SADECE BU)
-const BASE_CIRCLE_LIFETIME = 2600;
-const EXTRA_CIRCLE_LIFETIME = 1400;
+// ⬇️ KOMPLİKE YAŞAM SÜRESİ PARAMETRELERİ
+const BASE_CIRCLE_LIFETIME = 2600;      // temel
+const EXTRA_CIRCLE_LIFETIME = 1400;     // rastgele eklenti
+const MIN_CIRCLE_LIFETIME = 3000;       // minimum (ms)
+const MAX_CIRCLE_LIFETIME = 20000;      // maximum (ms)
+const SHOT_TRAVEL_SAMPLE_LIMIT = 30;    // ortalama hesaplarken kullanılacak örnek sayısı
 
 // ================== CANVAS ==================
 const canvas = document.getElementById("game");
@@ -36,9 +39,20 @@ canvas.addEventListener("mousemove", e => {
   mouse.y = e.clientY;
 });
 
-// ================== SHOTS ==================
+// ================== SHOT / STATS TRACKING ==================
+// bullets' speed constants (pixels per frame)
+const BULLET_PIXELS_PER_FRAME = 12;
+// assume approx 60 FPS to convert px -> ms: px / (BULLET_PIXELS_PER_FRAME * 60) * 1000
+// convenience factor:
+const PX_TO_MS_FACTOR = 1000 / (BULLET_PIXELS_PER_FRAME * 60); // ≈ 1.3889
+
 let shots = [];
 let lastShotTime = 0;
+
+// analytics for adaptive lifeTime
+let shotTravelSamples = []; // ms
+let shotsFired = 0;
+let shotsHit = 0;
 
 document.addEventListener("keydown", e => {
   if (e.key.toLowerCase() === "q") {
@@ -52,13 +66,33 @@ document.addEventListener("keydown", e => {
 
 function shoot() {
   const angle = Math.atan2(mouse.y - player.y(), mouse.x - player.x());
-  shots.push({
+  const s = {
     x: player.x(),
     y: player.y(),
-    dx: Math.cos(angle) * 12,
-    dy: Math.sin(angle) * 12,
-    life: 60
-  });
+    dx: Math.cos(angle) * BULLET_PIXELS_PER_FRAME,
+    dy: Math.sin(angle) * BULLET_PIXELS_PER_FRAME,
+    life: 60,
+    startTime: performance.now()
+  };
+  shots.push(s);
+  shotsFired++;
+}
+
+// helper: moving average of last N samples
+function getAvgShotTravelMs() {
+  if (shotTravelSamples.length === 0) return null;
+  const start = Math.max(0, shotTravelSamples.length - SHOT_TRAVEL_SAMPLE_LIMIT);
+  let sum = 0, count = 0;
+  for (let i = start; i < shotTravelSamples.length; i++) {
+    sum += shotTravelSamples[i];
+    count++;
+  }
+  return sum / count;
+}
+
+// clamp helper
+function clamp(v, a, b) {
+  return Math.min(Math.max(v, a), b);
 }
 
 // ================== GAME STATE ==================
@@ -94,6 +128,37 @@ function spawnNewCircle() {
   const dx = Math.cos(angle) * CIRCLE_SPEED;
   const dy = Math.sin(angle) * CIRCLE_SPEED;
 
+  // ---------- KOMPLİKE YAŞAM SÜRESİ HESABI ----------
+  const distToPlayer = Math.hypot(player.x() - x, player.y() - y);
+
+  // 1) temel rastgele parça
+  const baseRand = BASE_CIRCLE_LIFETIME + Math.random() * EXTRA_CIRCLE_LIFETIME;
+
+  // 2) mesafeye bağlı ekstra (uzaksa daha uzun): px -> ms approx
+  const distanceMsEstimate = distToPlayer * PX_TO_MS_FACTOR; // tahmini tek atış zamanı
+  const distanceFactorMs = clamp(distanceMsEstimate * 1.2, 0, 4000);
+
+  // 3) gerçekteki oyuncu atış ortalaması (eğer varsa), yoksa mesafe tahmini kullan
+  const avgShotMs = getAvgShotTravelMs() ?? distanceMsEstimate;
+
+  // 4) oyuncu başarı/başarısızlığına göre uyarlama
+  const accuracy = shotsFired > 0 ? shotsHit / shotsFired : 0.45; // varsayılan bir değer
+  // düşük doğruluk -> süreyi uzat, yüksek doğruluk -> küçük azaltma
+  const accuracyFactorMs = clamp((1 - accuracy) * 2500 - (accuracy - 0.5) * 200, -800, 4000);
+
+  // 5) kaçırma stresi (oyuncu çok kaçırdıysa biraz daha yardımcı ol)
+  const missedStreakBonus = clamp(gameState.missed * 450, 0, 3500);
+
+  // 6) toplamı topla ve sınırla
+  let computedLife = baseRand
+    + distanceFactorMs
+    + avgShotMs * 0.9
+    + accuracyFactorMs
+    + missedStreakBonus;
+
+  computedLife = Math.round(clamp(computedLife, MIN_CIRCLE_LIFETIME, MAX_CIRCLE_LIFETIME));
+
+  // ---------- circle objesi ----------
   currentCircle = {
     x,
     y,
@@ -103,12 +168,11 @@ function spawnNewCircle() {
     spawnTime: performance.now(),
     lastDirectionChange: performance.now(),
     color: "red",
-    // ⬇️ HER DAİREYE ÖZEL YAŞAM SÜRESİ
-    lifeTime:
-      BASE_CIRCLE_LIFETIME +
-      Math.random() * EXTRA_CIRCLE_LIFETIME
+    // hayat burada atandı (ms)
+    lifeTime: computedLife
   };
 
+  // nextCircleTime: fallback (oyuncunun mermisiyle veya lifeTime dolunca değişecek)
   nextCircleTime = performance.now() + currentCircle.lifeTime;
 }
 
@@ -125,12 +189,15 @@ function update() {
     nextCircleTime = now + INITIAL_DELAY;
   }
 
+  // draw player
   ctx.fillStyle = player.color;
   ctx.beginPath();
   ctx.arc(player.x(), player.y(), player.r, 0, Math.PI * 2);
   ctx.fill();
 
-  shots.forEach((s, i) => {
+  // update shots
+  for (let i = shots.length - 1; i >= 0; i--) {
+    const s = shots[i];
     s.x += s.dx;
     s.y += s.dy;
     s.life--;
@@ -143,8 +210,9 @@ function update() {
     ctx.stroke();
 
     if (s.life <= 0) shots.splice(i, 1);
-  });
+  }
 
+  // spawn logic
   if (!currentCircle && now >= nextCircleTime) {
     spawnNewCircle();
   }
@@ -152,7 +220,7 @@ function update() {
   if (currentCircle) {
     const elapsed = now - currentCircle.spawnTime;
 
-    // ⬇️ YOK OLMA KONTROLÜ (UZATILDI)
+    // yok olma kontrolü (lifeTime artık komplike)
     if (elapsed >= currentCircle.lifeTime) {
       gameState.missed++;
       currentCircle = null;
@@ -182,17 +250,28 @@ function update() {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      shots.forEach((s, si) => {
+      // çarpışma kontrolü (her atışla)
+      for (let si = shots.length - 1; si >= 0; si--) {
+        const s = shots[si];
         if (Math.hypot(s.x - currentCircle.x, s.y - currentCircle.y) < currentCircle.r + 8) {
+          // hit - atış süresini ölç
+          const travelMs = performance.now() - (s.startTime || performance.now());
+          shotTravelSamples.push(travelMs);
+          if (shotTravelSamples.length > 200) shotTravelSamples.shift(); // hafıza sınırı
+
+          shotsHit++;
           gameState.score++;
-          currentCircle = null;
           shots.splice(si, 1);
+          currentCircle = null;
+          // hemen yeni daire doğması: spawnNewCircle() çağrısı ile mantığı aynı kalsın
           spawnNewCircle();
+          break;
         }
-      });
+      }
     }
   }
 
+  // HUD
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
   ctx.fillText(`VURULAN: ${gameState.score}`, 20, 40);
