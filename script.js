@@ -240,6 +240,23 @@ function update() {
 
       currentCircle.x += currentCircle.dx;
       currentCircle.y += currentCircle.dy;
+// ===== EKRAN SINIRI KORUMASI =====
+if (currentCircle.x < currentCircle.r) {
+  currentCircle.x = currentCircle.r;
+  currentCircle.dx *= -1;
+}
+if (currentCircle.x > canvas.width - currentCircle.r) {
+  currentCircle.x = canvas.width - currentCircle.r;
+  currentCircle.dx *= -1;
+}
+if (currentCircle.y < currentCircle.r) {
+  currentCircle.y = currentCircle.r;
+  currentCircle.dy *= -1;
+}
+if (currentCircle.y > canvas.height - currentCircle.r) {
+  currentCircle.y = canvas.height - currentCircle.r;
+  currentCircle.dy *= -1;
+}
 
       ctx.fillStyle = "red";
       ctx.beginPath();
@@ -281,3 +298,4 @@ function update() {
 }
 
 update();
+
