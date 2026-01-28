@@ -7,7 +7,7 @@ const DIRECTION_CHANGE_INTERVAL = 400;
 const SHOT_COOLDOWN = 200;
 
 // ✅ TEK GERÇEK AYAR
-const CIRCLE_LIFETIME = 1800; // 1.8 saniye
+const CIRCLE_LIFETIME = 1000; // 1.8 saniye
 
 // ================== CANVAS ==================
 const canvas = document.getElementById("game");
@@ -194,3 +194,4 @@ function update() {
 }
 
 update();
+
