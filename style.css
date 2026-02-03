@@ -11,10 +11,71 @@ body {
   align-items: center;
   width: 100vw;
   height: 100vh;
+  font-family: Arial, sans-serif;
 }
 
 canvas {
   display: block;
+}
+
+.menu-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 40px;
+  border-radius: 20px;
+  border: 2px solid cyan;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+}
+
+.game-title {
+  color: white;
+  font-size: 48px;
+  margin-bottom: 40px;
+  text-shadow: 0 0 10px cyan;
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.menu-btn {
+  padding: 15px 30px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+#lvl1Btn {
+  background: #00ffaa;
+  color: #004400;
+  box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+}
+
+#lvl1Btn:hover {
+  background: #55ffcc;
+  transform: scale(1.05);
+}
+
+#lvl2Btn {
+  background: #ff4444;
+  color: #440000;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+}
+
+#lvl2Btn:hover {
+  background: #ff6666;
+  transform: scale(1.05);
 }
 
 .restart-btn {
