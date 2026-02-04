@@ -3,7 +3,7 @@ const INITIAL_DELAY = 1500;
 const MAX_MISSED = 10;
 const CIRCLE_RADIUS = 25;
 const CIRCLE_SPEED_LVL1 = 0.9;
-const CIRCLE_SPEED_LVL2 = 1.3; // Hafif daha hareketli
+const CIRCLE_SPEED_LVL2 = 1.35; // Hafif daha hareketli
 const DIRECTION_CHANGE_INTERVAL = 400;
 const SHOT_COOLDOWN = 200;
 
@@ -63,8 +63,7 @@ function shoot() {
     x: player.x(),
     y: player.y(),
     dx: Math.cos(angle) * 12,
-    dy: Math.sin(angle) * 12,
-    life: Math.ceil(Math.hypot(canvas.width, canvas.height) / 12) + 10
+    dy: Math.sin(angle) * 12
   });
 }
 
@@ -220,7 +219,6 @@ function update() {
     const s = shots[i];
     s.x += s.dx;
     s.y += s.dy;
-    s.life--;
 
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 3;
@@ -229,7 +227,13 @@ function update() {
     ctx.lineTo(s.x - s.dx * 2, s.y - s.dy * 2);
     ctx.stroke();
 
-    if (s.life <= 0) shots.splice(i, 1);
+    // Ekrandan çıktıysa sil
+    if (
+      s.x < -50 || s.x > canvas.width + 50 ||
+      s.y < -50 || s.y > canvas.height + 50
+    ) {
+      shots.splice(i, 1);
+    }
   }
 
   // CIRCLES UPDATE LOOP
@@ -260,11 +264,20 @@ function update() {
     c.x += c.dx;
     c.y += c.dy;
 
-    // Sınır ve Sekme
-    if (c.x < c.r || c.x > canvas.width - c.r) {
+    // Sınır ve Sekme (Clamping eklendi)
+    if (c.x < c.r) {
+      c.x = c.r;
+      c.dx *= -1;
+    } else if (c.x > canvas.width - c.r) {
+      c.x = canvas.width - c.r;
       c.dx *= -1;
     }
-    if (c.y < c.r || c.y > canvas.height - c.r) {
+
+    if (c.y < c.r) {
+      c.y = c.r;
+      c.dy *= -1;
+    } else if (c.y > canvas.height - c.r) {
+      c.y = canvas.height - c.r;
       c.dy *= -1;
     }
 
