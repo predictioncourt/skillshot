@@ -6,6 +6,8 @@ const CIRCLE_SPEED_LVL1 = 0.9;
 const CIRCLE_SPEED_LVL2 = 1.35; // Hafif daha hareketli
 const DIRECTION_CHANGE_INTERVAL = 400;
 const SHOT_COOLDOWN = 200;
+const SHOT_SPEED_LVL1 = 12;
+const SHOT_SPEED_LVL2 = 18; // Level 2 için daha hızlı mermi
 
 // ✅ TEK GERÇEK AYAR
 const CIRCLE_LIFETIME = 1800; // 1.8 saniye (Level 1 için)
@@ -59,11 +61,12 @@ document.addEventListener("keydown", e => {
 
 function shoot() {
   const angle = Math.atan2(mouse.y - player.y(), mouse.x - player.x());
+  const speed = gameState.level === 1 ? SHOT_SPEED_LVL1 : SHOT_SPEED_LVL2;
   shots.push({
     x: player.x(),
     y: player.y(),
-    dx: Math.cos(angle) * 12,
-    dy: Math.sin(angle) * 12
+    dx: Math.cos(angle) * speed,
+    dy: Math.sin(angle) * speed
   });
 }
 
@@ -155,8 +158,18 @@ restartBtn.addEventListener("click", () => {
 });
 
 // ================== GAME LOOP ==================
+let lastTime = performance.now();
+
 function update() {
   const now = performance.now();
+  // Delta time hesapla ve çok büyük sıçramaları (örn. sekme değişimi) önlemek için sınırla
+  const dt = Math.min(now - lastTime, 100); 
+  lastTime = now;
+  
+  // 60 FPS baz alınarak hesaplanan delta faktörü
+  // Eğer 144Hz ise dt ~6.9ms olacak, 6.9/16.6 ~= 0.41 ile çarpılacak
+  // Böylece hareket her karede daha az ama toplamda saniyede aynı olacak
+  const dtFactor = dt / (1000 / 60);
 
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -217,8 +230,8 @@ function update() {
   // SHOTS
   for (let i = shots.length - 1; i >= 0; i--) {
     const s = shots[i];
-    s.x += s.dx;
-    s.y += s.dy;
+    s.x += s.dx * dtFactor;
+    s.y += s.dy * dtFactor;
 
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 3;
@@ -261,8 +274,8 @@ function update() {
       c.dy = Math.sin(a) * speed;
     }
 
-    c.x += c.dx;
-    c.y += c.dy;
+    c.x += c.dx * dtFactor;
+    c.y += c.dy * dtFactor;
 
     // Sınır ve Sekme (Clamping eklendi)
     if (c.x < c.r) {
@@ -288,6 +301,16 @@ function update() {
     ctx.fill();
     ctx.strokeStyle = "white";
     ctx.stroke();
+
+    // Level 2 için geri sayım
+    if (gameState.level === 2) {
+      const remaining = Math.max(0, Math.ceil((lifetime - (now - c.spawnTime)) / 1000));
+      ctx.fillStyle = "white";
+      ctx.font = "bold 20px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(remaining, c.x, c.y);
+    }
 
     // Vurulma Kontrolü
     for (let j = shots.length - 1; j >= 0; j--) {
